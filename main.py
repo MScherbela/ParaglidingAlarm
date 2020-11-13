@@ -3,6 +3,14 @@ import utime
 import network
 import urequests
 
+leds = dict(red=Pin(4, Pin.OUT),
+            yellow= Pin(0, Pin.OUT),
+            green=Pin(2, Pin.OUT))
+buzzer = Pin(16, Pin.OUT)
+buzzer.off()
+for l in leds.values():
+    l.off()
+
 def parseParaglidingStatus(html):
     tokens = html.split('<div class="ampel ')
     for t in tokens[1:]:
@@ -30,13 +38,20 @@ def connectToWIFI():
     while not routercon.isconnected():
         utime.sleep_ms(100)
 
-leds = dict(red=Pin(4, Pin.OUT),
-            yellow= Pin(0, Pin.OUT),
-            green=Pin(2, Pin.OUT))
-for l in leds.values():
-    l.off()
+def buzz(n=3, repeat=1):
+    for r in range(repeat):
+        for i in range(n):
+            buzzer.on()
+            utime.sleep_ms(30)
+            buzzer.off()
+            utime.sleep_ms(500)
+        utime.sleep(5)
 
+
+for l in leds:
+    leds[l].on()
 connectToWIFI()
+leds['red'].off()
 
 while True:
     status = getParaglidingStatus()
@@ -44,5 +59,8 @@ while True:
         l.off()
     leds[status].on()
     print(status)
-    utime.sleep(60)
+    if status == 'green':
+        buzz(n=4, repeat=10)
+    for minute in range(5):
+        utime.sleep(60)
 
