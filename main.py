@@ -10,7 +10,9 @@ LEDS = dict(red=Pin(4, Pin.OUT, value=0),
 BUZZER = Pin(16, Pin.OUT)
 BUZZER.off()
 
-wake_on_yellow = True
+# If high: ring the alarm on yellow; if low, only ring on green
+wake_on_yellow_switch = Pin(17, Pin.IN, Pin.PULL_UP)
+
 machine.freq(80000000)
 
 
@@ -81,8 +83,8 @@ while True:
     status = getParaglidingStatus()
     displayStatusOnLEDs(status)
     print(status)
-    if (status == ParagliderStatus.GREEN) or ((status == ParagliderStatus.YELLOW) and wake_on_yellow):
-        buzz(n=3, repeat=5)
+    if (status == ParagliderStatus.GREEN) or ((status == ParagliderStatus.YELLOW) and wake_on_yellow_switch.value()):
+        buzz(n=3, repeat=2)
     utime.sleep(5*60)
 
     # Sleep for 60 seconds; On wakeup, the script fill start fully from the beginning, with RAM being fully reset:
