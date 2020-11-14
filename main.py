@@ -1,9 +1,8 @@
-from machine import Pin, DAC, Timer
+from machine import Pin
 import machine
 import utime
 import network
 import urequests
-import math
 
 LEDS = dict(red=Pin(4, Pin.OUT, value=0),
             yellow=Pin(0, Pin.OUT, value=0),
@@ -12,6 +11,7 @@ BUZZER = Pin(16, Pin.OUT)
 BUZZER.off()
 
 wake_on_yellow = True
+machine.freq(80000000)
 
 
 class ParagliderStatus:
@@ -19,7 +19,6 @@ class ParagliderStatus:
     YELLOW = 1
     GREEN = 2
     ERROR = 3
-
 
 def parseParaglidingStatus(html):
     tokens = html.split('<div class="ampel ')
@@ -33,14 +32,12 @@ def parseParaglidingStatus(html):
                 return ParagliderStatus.RED
     return ParagliderStatus.ERROR
 
-
 def getParaglidingStatus():
     url = 'http://www.fly-hohewand.at/home/aktuelle-info-ueber-schulbetrieb'
     r = urequests.get(url)
     html = r.text
     r.close()
     return parseParaglidingStatus(html)
-
 
 def connectToWIFI():
     print("Connecting to WIFI...")
@@ -74,26 +71,9 @@ def displayStatusOnLEDs(status):
         LEDS['red'].on()
         LEDS['yellow'].on()
 
-
-# def dac_timer_callback(timer):
-#     global dac, dac_buffer, dac_buffer_pos
-#     value = dac_buffer[dac_buffer_pos]
-#     dac.write(value)
-#     dac_buffer_pos += 1
-#     if dac_buffer_pos == len(dac_buffer):
-#         dac_buffer_pos = 0
-
 for l in LEDS.values():
     l.on()
 connectToWIFI()
-
-# dac = DAC(Pin(25, Pin.OUT))
-# dac_buffer = [0] * 4096
-# dac_buffer_pos = 0
-# for i in range(len(dac_buffer)):
-#     dac_buffer[i] = int((0.5+0.5*math.sin(50*i*math.pi*2/len(dac_buffer))) * 255)
-# dac_timer = Timer(1)
-# dac_timer.init(mode=Timer.PERIODIC, freq=4096, callback=dac_timer_callback) # every millisecond
 
 LEDS['red'].off()
 
@@ -103,7 +83,9 @@ while True:
     print(status)
     if (status == ParagliderStatus.GREEN) or ((status == ParagliderStatus.YELLOW) and wake_on_yellow):
         buzz(n=3, repeat=5)
+    utime.sleep(5*60)
 
     # Sleep for 60 seconds; On wakeup, the script fill start fully from the beginning, with RAM being fully reset:
     # The while loop therefore actually runs only once!
-    machine.deepsleep(60000)
+    # Note: This also disables the GPIOs!
+    # machine.deepsleep(60000)
